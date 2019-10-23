@@ -32,7 +32,7 @@ With this project we will simulate a famoues probability problem. This will not 
  1. **Gambler's Ruin**: Suppose you have a bankroll of $1000 and make bets of $100 on a fair game. By simulating the outcome directly for at most 5000 iterations of the game (or hands), estimate:
 ```{r}
 set.seed(1)
-GR=function(bet,bankroll,p)
+GR<-function(bet,bankroll,p)
 {
   k=0
   while(bet>0) {
@@ -52,8 +52,8 @@ GR=function(bet,bankroll,p)
   return(duration)
 }
 
-durations = numeric()
-s = 5000
+durations <- numeric()
+s <- 5000
 for(i in 1:s)
 {
   nextd = GR(100,900,0.5)
@@ -87,7 +87,7 @@ mean
     d. the mean and variance of your bankroll after 100 hands (including busts).
 ```{r}
 set.seed(1)
-GR1=function(bet,bankroll,p)
+GR1<-function(bet,bankroll,p)
 {
   k=0
   while(bet>0) {
@@ -124,7 +124,7 @@ var(bankroll)
     e. the mean and variance of your bankroll after 500 hands (including busts).
 ```{r}
 set.seed(1)
-GR2=function(bet,bankroll,p)
+GR2<-function(bet,bankroll,p)
 {
   k=0
   while(bet>0) {
@@ -163,5 +163,95 @@ Note: you *must* stop playing if your player has gone bust. How will you handle 
 
 2. **Markov Chains**. Suppose you have a game where the probability of winning on your first hand is 48%; each time you win, that probability goes up by one percentage point for the next game (to a maximum of 100%, where it must stay), and each time you lose, it goes back down to 48%. Assume you cannot go bust and that the size of your wager is a constant $100.
     a. Is this a fair game? Simulate one hundred thousand sequential hands to determine the size of your return. Then repeat this simulation 99 more times to get a range of values to calculate the expectation.
+```{r}
+MC<-function(bet,bankroll,p)
+{
+  k=0
+  prob<-p
+  while(bet>0) {
+    ProbVal=runif(1)
+    if(ProbVal <= p)
+    {
+      bankroll = bankroll +bet
+      p = p+0.01
+    }else{
+      bankroll = bankroll-bet
+      p = prob
+    }
+    k=k+1
+    if(k==100000){break}
+    if(bankroll < bet){break}
+  }
+  return(bankroll)
+}
+
+size = numeric()
+s = 100
+for(i in 1:s)
+{
+  nextb = MC(100,900,0.48)
+  size = c(size,nextb)
+}
+mean(size)
+#This is not a fair game because the mean is 0
+```
+    
     b. Repeat this process but change the starting probability to a new value within 2% either way. Get the expected return after 100 repetitions. Keep exploring until you have a return value that is as fair as you can make it. Can you do this automatically?
+```{r}
+set.seed(1)
+proportion<-numeric()
+for (j in 1:20){
+  size=numeric()
+  s = 100
+for(i in 1:s)
+{
+  nextb = MC(100,900,0.46+0.002*j)
+  size = c(size,nextb)
+}
+  nextproportion=length(which(size==0))/100
+  proportion=c(proportion,nextproportion)
+}
+proportion
+#Yes, but you have to start near .05 for this probability 
+```
+    
     c. Repeat again, keeping the initial probability at 48%, but this time change the probability increment to a value different from 1%. Get the expected return after 100 repetitions. Keep changing this value until you have a return value that is as fair as you can make it. 
+```{r}
+MCFunc1<-function(A,B,p,step)
+{
+  k=0
+  prob<-p
+  while(A>0) {
+    ProbVal=runif(1)
+    if(ProbVal <= p)
+    {
+      B = B+A
+      p = p+step
+    }else{
+      B = B-A
+      p = prob
+    }
+    k=k+1
+    if(k==100000){break}
+    if(B<A){break}
+  }
+  return(B)
+}
+
+set.seed(1)
+prop = numeric()
+for (j in 1:20) {
+size = numeric()
+M = 100
+for(i in 1:M)
+{
+  nextb = MCFunc1(A=100,B=900,p=0.48,step=0.002*j)
+  size = c(size,nextb)
+}
+nextprop = length(which(size==0))/100
+prop<-c(prop,nextprop)
+}
+prop
+#The proportion returned is .5 which is as fair as this can get
+```
+    
